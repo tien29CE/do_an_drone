@@ -1,0 +1,5 @@
+Roboflow source:
+1. https://universe.roboflow.com/ultimate-bqab5/smoke_4
+2. https://universe.roboflow.com/yzj/wcnn
+3. https://universe.roboflow.com/ultimate-dtac-npo-rr3et/fine-e6uee
+4. https://universe.roboflow.com/fair-urc6h/fire-per

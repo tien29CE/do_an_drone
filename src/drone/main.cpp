@@ -3,8 +3,8 @@
 
 int main(int argc, char* argv[]) {
 	QCoreApplication app(argc, argv);
-	
-	Drone drone = new Drone(new QObject());
+
+	Drone *drone = new Drone();
 
 	return app.exec();
 }

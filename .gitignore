@@ -1,2 +1,45 @@
 build/
 .vscode/
+
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+drone_ui/node_modules
+drone_ui/.pnp
+drone_ui/.pnp.*
+drone_ui/.yarn/*
+drone_ui/!.yarn/patches
+drone_ui/!.yarn/plugins
+drone_ui/!.yarn/releases
+drone_ui/!.yarn/versions
+
+# testing
+drone_ui/coverage
+
+# next.js
+drone_ui/.next/
+drone_ui/out/
+
+# production
+drone_ui/build
+
+# misc
+drone_ui/.DS_Store
+drone_ui/*.pem
+
+# debug
+drone_ui/npm-debug.log*
+drone_ui/yarn-debug.log*
+drone_ui/yarn-error.log*
+drone_ui/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+drone_ui/.env*
+
+# vercel
+drone_ui/.vercel
+
+# typescript
+drone_ui/*.tsbuildinfo
+drone_ui/next-env.d.ts

@@ -1,9 +1,8 @@
 #include "drone.h"
 
-Drone::Drone()
-    : QObject()
+Drone::Drone(QObject *parent)
+    : QObject(parent)
     , m_thread(new QThread())
-    , m_socket(nullptr)
 {
     this->moveToThread(this->m_thread);
     QObject::connect(this->m_thread, &QThread::started, this, &Drone::run);
@@ -12,6 +11,8 @@ Drone::Drone()
 
 void Drone::run()
 {
-    this->m_socket = std::make_shared<WebSocketClient>(this);
+    this->m_socket = std::make_unique<WebSocketClient>(this);
     this->m_socket->connect("localhost", 4000);
+    this->m_workerPool = std::make_unique<WorkerThreadPool>();
+    this->m_workerPool->start();
 }

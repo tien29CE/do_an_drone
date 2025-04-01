@@ -25,7 +25,6 @@ void WebSocketClient::onConnected()
     qDebug() << "✅ Đã kết nối đến Next.js Socket!";
     QObject::connect(this->m_socket, &QWebSocket::textFrameReceived, this, &WebSocketClient::onMessageReceived);
     this->m_socket->sendBinaryMessage("Xin chào từ Qt Backend!");
-    QTimer::singleShot(2000, this, [this](){this->m_socket->sendBinaryMessage("Xin chào từ Qt Backend lan 2!");});
 }
 
 void WebSocketClient::onDisconnected()
@@ -42,5 +41,5 @@ void WebSocketClient::onStateChange()
 void WebSocketClient::onMessageReceived(const QString &message, bool is_last_frame) {
     QJsonObject data = QJsonDocument::fromJson(message.toUtf8()).object();
 
-    qDebug() << data.value("markers");
+    qDebug() << data;
 }

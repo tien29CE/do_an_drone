@@ -1,11 +1,13 @@
 #pragma once
 #include <QWebSocket>
+#include <QThread>
 #include <QDebug>
 
-class WebSocketClient : public QObject {
+class WebSocketClient : public QObject
+{
     Q_OBJECT
 public:
-    WebSocketClient(QObject *parent);
+    WebSocketClient(QObject *parent = nullptr);
     void connect(const QString &host, quint16 port);
 
 public slots:

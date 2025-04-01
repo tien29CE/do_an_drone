@@ -1,5 +1,7 @@
-file(GLOB_RECURSE DRONE_SRC "*.cpp" "*.c"
+file(GLOB_RECURSE DRONE_SRC "*.cpp" "*.c" "*.h" "*.inl"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.inl"
 )
 
 add_executable(${PROJECT_NAME} main.cpp)

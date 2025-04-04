@@ -11,8 +11,8 @@ Drone::Drone(QObject *parent)
 
 void Drone::run()
 {
-    this->m_socket = std::make_unique<WebSocketClient>(this);
-    this->m_socket->connect("localhost", 4000);
-    this->m_workerPool = std::make_unique<WorkerThreadPool>();
+    this->m_workerPool = new WorkerThreadPool();
+    this->m_socket = new WebSocketClient(this->m_workerPool);
     this->m_workerPool->start();
+    this->m_socket->connect("localhost", 4000);
 }

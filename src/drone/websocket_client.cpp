@@ -6,24 +6,27 @@
 #include <QJsonValue>
 
 WebSocketClient::WebSocketClient(QObject *parent)
-    : QObject(parent)
+    : QObject(nullptr)
     , m_socket(new QWebSocket())
+    , m_thread(new QThread())
+    , m_parent(qobject_cast<WorkerThreadPool *>(parent))
 {
     QObject::connect(this->m_socket, &QWebSocket::connected, this, &WebSocketClient::onConnected);
     QObject::connect(this->m_socket, &QWebSocket::disconnected, this, &WebSocketClient::onDisconnected);
     QObject::connect(this->m_socket, &QWebSocket::stateChanged, this, &WebSocketClient::onStateChange);
+    QObject::connect(this->m_socket, SIGNAL(textMessageReceived(const QString &)), this, SLOT(addTask(QString)));
+    QObject::connect(this->m_parent, SIGNAL(signalOneTaskDone(QString)), this, SLOT(sendMessage(QString)));
 }
 
 void WebSocketClient::connect(const QString &host, quint16 port)
 {
-    QUrl url = QString("ws://%1:%2").arg(host, QString::number(port));
-    this->m_socket->open(url);
+    this->m_url = QString("ws://%1:%2").arg(host, QString::number(port));
+    this->m_socket->open(this->m_url);
 }
 
 void WebSocketClient::onConnected()
 {
     qDebug() << "✅ Đã kết nối đến Next.js Socket!";
-    QObject::connect(this->m_socket, &QWebSocket::textFrameReceived, this, &WebSocketClient::onMessageReceived);
     this->m_socket->sendBinaryMessage("Xin chào từ Qt Backend!");
 }
 
@@ -35,11 +38,27 @@ void WebSocketClient::onDisconnected()
 
 void WebSocketClient::onStateChange()
 {
-    qDebug() << this->m_socket->state();
+    qDebug() << "Trạng thái socket đã thay đổi: " << this->m_socket->state();
+    if(this->m_socket->state() == QAbstractSocket::UnconnectedState) {
+        // this->m_socket->open(this->m_url);
+        qDebug() << "Đang kết nối lại đến Next.js Socket...";
+    }
 }
 
-void WebSocketClient::onMessageReceived(const QString &message, bool is_last_frame) {
-    QJsonObject data = QJsonDocument::fromJson(message.toUtf8()).object();
+void WebSocketClient::sendMessage(QString message)
+{
+    if (this->m_socket->state() == QAbstractSocket::ConnectedState) {
+        this->m_socket->sendTextMessage(message);
+    } else {
+        qDebug() << "Không thể gửi tin nhắn, socket không kết nối!";
+    }
+}
 
-    qDebug() << data;
+void WebSocketClient::addTask(QString data)
+{
+    if (this->m_parent) {
+        this->m_parent->addTask(std::move(data));
+    } else {
+        qDebug() << "Không thể thêm tác vụ, WorkerThreadPool không hợp lệ!";
+    }
 }

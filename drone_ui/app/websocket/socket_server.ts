@@ -20,7 +20,9 @@ class WebSocketServerWrapper {
       ws.on("message", (message: WebSocket.RawData) => {
         this.wss.clients.forEach((client) => {
           if (client !== ws) {
-            client.send(message.toString());
+            if(client.readyState === WebSocket.OPEN) {
+              client.send(message.toString());
+            }
           }
         })
       });

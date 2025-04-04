@@ -1,9 +1,9 @@
 #pragma once
 #include <QObject>
-#include <thread>
-#include <memory>
 #include "safe_queue.h"
 #include "worker.h"
+
+#define WORKER_THREAD_POOL_SIZE 5
 
 class WorkerThreadPool : public QObject
 {
@@ -11,8 +11,14 @@ class WorkerThreadPool : public QObject
 public:
     explicit WorkerThreadPool(QObject *parent = nullptr);
     ~WorkerThreadPool();
-    void addTask(QString &&data);
     void start();
+signals:
+    void signalOneTaskDone(QString data);
+
+public slots:
+    void addTask(QString data);
+    QString removeTask();
+    void emitTaskDone(QString data);
 
 protected:
     void startPool();

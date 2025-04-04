@@ -4,8 +4,9 @@ WorkerThreadPool::WorkerThreadPool(QObject *parent)
     : QObject(parent)
     , m_thread(new QThread())
 {
-    for(size_t i = 0; i < 3; i++) {
-        auto worker = new Worker();
+    for(size_t i = 0; i < WORKER_THREAD_POOL_SIZE; i++) {
+        auto worker = new Worker(this);
+        QObject::connect(worker, SIGNAL(signalDone(QString)), this, SLOT(emitTaskDone(QString)), Qt::QueuedConnection);
         worker->start();
         this->m_workers.emplace_back(worker);
     }
@@ -20,9 +21,19 @@ WorkerThreadPool::~WorkerThreadPool()
     }
 }
 
-void WorkerThreadPool::addTask(QString &&data)
+void WorkerThreadPool::addTask(QString data)
 {
     this->m_safeQueue.enqueue(std::move(data));
+}
+
+QString WorkerThreadPool::removeTask()
+{
+    return this->m_safeQueue.dequeue();
+}
+
+void WorkerThreadPool::emitTaskDone(QString data)
+{
+    emit this->signalOneTaskDone(std::move(data));
 }
 
 void WorkerThreadPool::start()
@@ -36,8 +47,8 @@ void WorkerThreadPool::startPool()
     while(true)
     {
         try {
-            auto item = this->m_safeQueue.dequeue();
             for(auto it = this->m_workers.begin(); it != this->m_workers.end(); it++) {
+                auto item = this->m_safeQueue.dequeue();
                 if (!(*it)->isBusy()) {
                     emit (*it)->signalTaskCome(item);
                 }

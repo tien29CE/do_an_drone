@@ -7,6 +7,7 @@ void SafeQueue<ITEM>::enqueue(ITEM &&item)
     this->m_queue.emplace_back(std::move(item));
 
     this->m_cv.notify_one();
+    lock.unlock();
 }
 
 template<class ITEM>
@@ -18,5 +19,7 @@ ITEM SafeQueue<ITEM>::dequeue()
     auto item = this->m_queue.front();
     this->m_queue.pop_front();
 
+    this->m_cv.notify_one();
+    lock.unlock();
     return item;
 }

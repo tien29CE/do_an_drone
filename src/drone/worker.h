@@ -1,6 +1,5 @@
 #pragma once
 #include <QThread>
-#include <memory>
 
 class Worker : public QObject 
 {
@@ -19,6 +18,7 @@ public slots:
     void doTask(QString data);
 
 private:
-    bool is_busy;
+    bool m_isBusy;
     QThread* m_thread;
+    QObject* m_workerPool;
 };

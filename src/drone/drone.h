@@ -14,6 +14,6 @@ public:
 
 private:
     QThread *m_thread;
-    std::unique_ptr<WebSocketClient> m_socket;
-    std::unique_ptr<WorkerThreadPool> m_workerPool;
+    WebSocketClient* m_socket;
+    WorkerThreadPool* m_workerPool;
 };

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import L from "leaflet";
+import { Popup } from "react-leaflet";
 import {
   MapContainer,
   TileLayer,
@@ -39,14 +40,102 @@ const shapePointIcon = new L.DivIcon({
   iconAnchor: [7, 7],
 });
 
-const url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+// const url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"; 
+const url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+
+
 const attribution =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+
+// Create a rotatable drone icon
+const createDroneIcon = (rotation: number) => {
+  return new L.DivIcon({
+    className: "drone-marker",
+    html: `<div style="
+      width: 20px;
+      height: 20px;
+      background: url('/drone.svg') no-repeat center center;
+      background-size: contain;
+      transform: rotate(${rotation}deg);
+    "></div>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+};
+
+// Camera FOV & Resolution
+const FOV_X = 66 * (Math.PI / 180); // Chuyển sang radian
+const FOV_Y = 41 * (Math.PI / 180); // Chuyển sang radian
+
+// Hàm tính toán chiều rộng và chiều cao vùng nhìn thấy trên mặt đất
+const calculateViewArea = (lat, lng, altitude, heading) => {
+  const W = 2 * altitude * Math.tan(FOV_X / 2);
+  const H = 2 * altitude * Math.tan(FOV_Y / 2);
+
+  // Convert width & height to degrees
+  const halfW_deg = (W / 2) / (111320 * Math.cos(lat * Math.PI / 180));
+  const halfH_deg = (H / 2) / 110574;
+
+  // Convert heading to radians
+  const theta = heading * (Math.PI / 180);
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+
+  // Calculate the four corners
+  const corners = [
+    [lat + halfH_deg * cosT - halfW_deg * sinT, lng + halfH_deg * sinT + halfW_deg * cosT], // Top-right
+    [lat + halfH_deg * cosT + halfW_deg * sinT, lng + halfH_deg * sinT - halfW_deg * cosT], // Top-left
+    [lat - halfH_deg * cosT + halfW_deg * sinT, lng - halfH_deg * sinT - halfW_deg * cosT], // Bottom-left
+    [lat - halfH_deg * cosT - halfW_deg * sinT, lng - halfH_deg * sinT + halfW_deg * cosT], // Bottom-right
+  ];
+
+  return corners;
+};
+
+// Component ViewArea để vẽ vùng nhìn thấy
+const ViewArea = ({ drone }: { drone: any }) => {
+  const viewArea = calculateViewArea(drone.lat, drone.lng, drone.altitude, drone.heading);
+  return <Polygon positions={viewArea} color="blue" />;
+};
+
 
 const Map: React.FC = () => {
   const [mode, setMode] = useState<"marker" | "polygon">("marker");
   const [markers, setMarkers] = useState<{ lat: number; lng: number }[]>([]);
   const [polygonPoints, setPolygonPoints] = useState<[number, number][]>([]);
+
+  const [drone, setDrone] = useState({
+    lat: 10.7769,
+    lng: 106.7009,
+    heading: 0,
+    altitude: 30, // Độ cao drone (m)
+  });
+
+  
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState<string | null>(null); // Error state
+
+  // Load drone data from JSON
+  useEffect(() => {
+    const fetchDroneData = async () => {
+      try {
+        const response = await fetch("/drone_data.json");
+        if (!response.ok) throw new Error("Failed to load drone data");
+        const data = await response.json();
+        setDrone(data); // Update drone data
+        setLoading(false); // Data successfully loaded
+      } catch (error) {
+        setError("Error loading drone data: " + error.message); // Set error message
+        setLoading(false); // Data loading completed with an error
+      }
+    };
+
+    fetchDroneData();
+    const interval = setInterval(fetchDroneData, 1000); // Update every 1000ms
+    return () => clearInterval(interval);
+  }, []);
+
 
   // Click event handler to add markers or shape points
   const MapClickHandler = () => {
@@ -86,6 +175,15 @@ const Map: React.FC = () => {
     setPolygonPoints([]);
   };
 
+  // Handle loading and error states
+  if (loading) {
+    return <div>Loading drone data...</div>; // Show a loading message while fetching data
+  }
+
+  if (error) {
+    return <div>{error}</div>; // Show an error message if there was an issue fetching the data
+  }
+
   return (
     <div className="relative">
       {/* Buttons (Bottom Right - Stacked) */}
@@ -116,11 +214,11 @@ const Map: React.FC = () => {
 
       {/* Leaflet Map */}
       <MapContainer
-        center={[10.7769, 106.7009]}
-        zoom={13}
+        center={[drone.lat, drone.lng]}
+        zoom={15}
         className="h-[100vh] rounded-lg"
       >
-        <TileLayer url={url} attribution={attribution} />
+        <TileLayer url={url} attribution={attribution} maxZoom={19}/>
         <MapClickHandler />
 
         {/* Regular Markers */}
@@ -152,6 +250,17 @@ const Map: React.FC = () => {
         {polygonPoints.length === 4 && (
           <Polygon positions={polygonPoints} color="purple" />
         )}
+
+      <Marker position={[drone.lat, drone.lng]} icon={createDroneIcon(drone.heading)}>
+        <Popup>
+          📍 <b>Drone Position:</b> <br />
+          Latitude: {drone.lat.toFixed(6)} <br />
+          Longitude: {drone.lng.toFixed(6)} <br />
+          Heading: {drone.heading}° <br />
+          Altitude: {drone.altitude} m
+        </Popup>
+      </Marker>
+      <ViewArea drone={drone} />
       </MapContainer>
     </div>
   );

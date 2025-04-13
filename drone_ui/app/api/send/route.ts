@@ -1,6 +1,7 @@
 // pages/api/socket/send.ts
-import { webSocketClient, webSocketServer } from "../../websocket/socket_server";
+import { webSocketServer } from "../../websocket/socket_server";
 import { NextResponse } from "next/server";
+import { webSocketClient } from "../../websocket/socket_client";
 
 export async function POST(req: Request) {
     const data = await req.json()

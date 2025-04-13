@@ -39,7 +39,7 @@ const shapePointIcon = new L.DivIcon({
   iconAnchor: [7, 7],
 });
 
-const url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const Map: React.FC = () => {
@@ -56,11 +56,7 @@ const Map: React.FC = () => {
         if (mode === "marker") {
           setMarkers((prevMarkers) => [...prevMarkers, { lat, lng }]);
         } else if (mode === "polygon") {
-          if (polygonPoints.length < 4) {
-            setPolygonPoints((prevPoints) => [...prevPoints, [lat, lng]]);
-          } else {
-            alert("You can only select 4 points to create a shape.");
-          }
+          setPolygonPoints((prevPoints) => [...prevPoints, [lat, lng]]);
         }
       },
     });
@@ -171,7 +167,7 @@ const Map: React.FC = () => {
         ))}
 
         {/* Polygon (Only renders if 4 points exist) */}
-        {polygonPoints.length === 4 && (
+        {polygonPoints.length >= 2 && (
           <Polygon positions={polygonPoints} color="purple" />
         )}
       </MapContainer>

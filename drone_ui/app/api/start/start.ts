@@ -1,7 +1,7 @@
 // pages/api/socket/start.ts
-import axios from "axios";
-import { webSocketServer, webSocketClient } from "../../websocket/socket_server";
+import { webSocketServer } from "../../websocket/socket_server";
 import { NextResponse } from "next/server";
+import { webSocketClient } from "../../websocket/socket_client";
 
 export default function START() {
   webSocketServer.start();

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from "react";
 
-interface ReceiveData {
+export interface ReceiveData {
   id: string;
   command: string;
   mode: string;
@@ -18,7 +18,7 @@ interface ReceiveData {
 }
 
 export const useWebSocketImage = (url: string) => {
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [recieveData, setRecieveData] = useState<ReceiveData | null>(null);
 
   useEffect(() => {
     const ws = new WebSocket(url);
@@ -30,9 +30,7 @@ export const useWebSocketImage = (url: string) => {
     ws.onmessage = (event) => {
       try {
         const data: ReceiveData = JSON.parse(event.data);
-        if (data.command === "Display drone data realtime" && data.image) {
-          setImageSrc(data.image);
-        }
+        setRecieveData(data);
       } catch (err) {
         console.error("❌ Error parsing WebSocket data", err);
       }
@@ -49,5 +47,5 @@ export const useWebSocketImage = (url: string) => {
     return () => ws.close();
   }, [url]);
 
-  return { imageSrc };
+  return { recieveData };
 };

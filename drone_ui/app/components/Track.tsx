@@ -1,19 +1,19 @@
-// app/Track.tsx
 'use client';
+
 import React from "react";
 import Image from "next/image";
-import { useWebSocketImage } from "../../hooks/hookWebsocketImage"; // <-- dùng hook
+import { useWebSocketImage } from "../../hooks/hookWebsocket"; // <-- dùng hook
 
 const Track: React.FC = () => {
-  const { imageSrc } = useWebSocketImage("ws://localhost:4000");
+  const { recieveData } = useWebSocketImage("ws://localhost:4000");
 
   return (
     <div className="rounded-lg">
       <h2 className="text-lg font-semibold mb-2">Picture Display</h2>
 
-      {imageSrc ? (
+      {recieveData ? (
         <Image
-          src={`data:image/jpeg;base64,${imageSrc}`}
+          src={`data:image/jpeg;base64,${recieveData.image}`}
           alt="Drone Snapshot"
           width={0}
           height={0}

@@ -42,7 +42,6 @@ export class WebSocketClientWrapper {
         let recieveData : ReceiveData = JSON.parse(data.toString());
         if (recieveData.command === "Display drone data realtime" && recieveData.image !== null) {
             imageSrc = recieveData.image; // Giả sử hình ảnh được gửi dưới dạng base64 string
-            console.log(imageSrc);
         } else {
             console.log("No image received");
         }

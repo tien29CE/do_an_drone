@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 
 if (WIN32)
     project("DRONE" LANGUAGES C CXX)

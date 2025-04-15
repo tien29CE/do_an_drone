@@ -20,14 +20,14 @@ const createDroneIcon = (rotation: number) => {
   return new L.DivIcon({
     className: "drone-marker",
     html: `<div style="
-      width: 20px;
-      height: 20px;
+      width: 50px;
+      height: 50px;
       background: url('/drone.svg') no-repeat center center;
       background-size: contain;
       transform: rotate(${rotation}deg);
     "></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    iconSize: [50, 50],
+    iconAnchor: [25, 25],
   });
 };
 
@@ -97,6 +97,7 @@ const Map: React.FC = () => {
   
   const { recieveData } = useWebSocketImage("ws://localhost:4000");
 
+  console.log("recieveData", recieveData?.lat, recieveData?.lon);
   // Click event handler to add markers or shape points
   const MapClickHandler = () => {
     useMapEvents({

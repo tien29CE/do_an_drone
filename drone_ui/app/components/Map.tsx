@@ -13,6 +13,54 @@ import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import markerShadowPng from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
+import { useWebSocketImage } from "../../hooks/hookWebsocket"; // <-- dùng hook
+
+
+const createDroneIcon = (rotation: number) => {
+  return new L.DivIcon({
+    className: "drone-marker",
+    html: `<div style="
+      width: 20px;
+      height: 20px;
+      background: url('/drone.svg') no-repeat center center;
+      background-size: contain;
+      transform: rotate(${rotation}deg);
+    "></div>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+};
+
+
+// Camera FOV & Resolution
+const FOV_X = 66 * (Math.PI / 180); // Chuyển sang radian
+const FOV_Y = 41 * (Math.PI / 180); // Chuyển sang radian
+
+// Hàm tính toán chiều rộng và chiều cao vùng nhìn thấy trên mặt đất
+const calculateViewArea = (lat:number, lng:number, altitude:number, heading:number) => {
+  const W = 2 * altitude * Math.tan(FOV_X / 2);
+  const H = 2 * altitude * Math.tan(FOV_Y / 2);
+
+  // Convert width & height to degrees
+  const halfW_deg = (W / 2) / (111320 * Math.cos(lat * Math.PI / 180));
+  const halfH_deg = (H / 2) / 110574;
+
+  // Convert heading to radians
+  const theta = heading * (Math.PI / 180);
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+
+  // Calculate the four corners
+  const corners = [
+    [lat + halfH_deg * cosT - halfW_deg * sinT, lng + halfH_deg * sinT + halfW_deg * cosT], // Top-right
+    [lat + halfH_deg * cosT + halfW_deg * sinT, lng + halfH_deg * sinT - halfW_deg * cosT], // Top-left
+    [lat - halfH_deg * cosT + halfW_deg * sinT, lng - halfH_deg * sinT - halfW_deg * cosT], // Bottom-left
+    [lat - halfH_deg * cosT - halfW_deg * sinT, lng - halfH_deg * sinT + halfW_deg * cosT], // Bottom-right
+  ];
+
+  return corners;
+};
+
 
 // Custom icon for regular markers
 const markerIcon = new L.Icon({
@@ -46,6 +94,8 @@ const Map: React.FC = () => {
   const [mode, setMode] = useState<"marker" | "polygon">("marker");
   const [markers, setMarkers] = useState<{ lat: number; lng: number }[]>([]);
   const [polygonPoints, setPolygonPoints] = useState<[number, number][]>([]);
+  
+  const { recieveData } = useWebSocketImage("ws://localhost:4000");
 
   // Click event handler to add markers or shape points
   const MapClickHandler = () => {
@@ -138,7 +188,7 @@ const Map: React.FC = () => {
         zoom={13}
         className="h-[100vh] rounded-lg"
       >
-        <TileLayer url={url} attribution={attribution} />
+        <TileLayer url={url} attribution={attribution} maxZoom={19}/>
         <MapClickHandler />
 
         {/* Regular Markers */}
@@ -170,6 +220,28 @@ const Map: React.FC = () => {
         {polygonPoints.length >= 2 && (
           <Polygon positions={polygonPoints} color="purple" />
         )}
+
+        {recieveData && recieveData.lat && recieveData.lon && (
+          <>
+            {/* Drone Marker */}
+            <Marker
+              position={[recieveData.lat, recieveData.lon]}
+              icon={createDroneIcon(recieveData.heading)}
+            />
+
+            {/* Camera View Box (FOV) */}
+            <Polygon
+            positions={calculateViewArea(
+              recieveData.lat,
+              recieveData.lon,
+              recieveData.altitude || 50,
+              recieveData.heading || 0
+            ) as [number, number][]}
+            pathOptions={{ color: "blue", weight: 2 }}
+          />
+          </>
+        )}
+
       </MapContainer>
     </div>
   );

@@ -18,7 +18,9 @@ export interface ReceiveData {
 }
 
 export const useWebSocketImage = (url: string) => {
-  const [recieveData, setRecieveData] = useState<ReceiveData | null>(null);
+  const [receiveData, setReceiveData] = useState<ReceiveData | null>(null);
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const [wayPoints, setWayPoints] = useState<any>(null);
 
   useEffect(() => {
     const ws = new WebSocket(url);
@@ -30,7 +32,22 @@ export const useWebSocketImage = (url: string) => {
     ws.onmessage = (event) => {
       try {
         const data: ReceiveData = JSON.parse(event.data);
-        setRecieveData(data);
+        if (!data.image && !data.wayPoints) {
+          console.log("📥 Received at data:", data);
+          setReceiveData(data);
+          return
+        }
+
+        if (data.image && !data.wayPoints  && data.image !== "") {
+          console.log("📥 Received at image:", data);
+          setImageSrc(data.image);
+          return;
+        }
+
+        if (data.wayPoints && data.wayPoints.length > 0) {
+          console.log("📥 Received at wayPoints:", data);
+          setWayPoints(data.wayPoints);
+        }
       } catch (err) {
         console.error("❌ Error parsing WebSocket data", err);
       }
@@ -47,5 +64,5 @@ export const useWebSocketImage = (url: string) => {
     return () => ws.close();
   }, [url]);
 
-  return { recieveData };
+  return { receiveData, imageSrc, wayPoints };
 };

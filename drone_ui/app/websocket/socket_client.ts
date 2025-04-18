@@ -31,33 +31,24 @@ export class WebSocketClientWrapper {
     // Kết nối tới server WebSocket
     public start(): void {
         this.ws.on("open", () => {
-        console.log("✅ Connected to WebSocket server");
-        // Bạn có thể gửi tin nhắn ngay khi kết nối thành công, nếu cần
-        // this.send("Hello from client!");
+            console.log("✅ Connected to WebSocket server");
         });
 
         this.ws.on("message", (data: WebSocket.Data) => {
-        // Xử lý tin nhắn nhận được
-        // console.log("📥 Received:", data.toString());
-        let recieveData : ReceiveData = JSON.parse(data.toString());
-        if (recieveData.command === "Display drone data realtime" && recieveData.image !== null) {
-            imageSrc = recieveData.image; // Giả sử hình ảnh được gửi dưới dạng base64 string
-        } else {
-            console.log("No image received");
-        }
         });
 
         this.ws.on("close", () => {
-        console.log("❌ Disconnected from WebSocket server");
+            console.log("❌ Disconnected from WebSocket server");
         });
 
         this.ws.on("error", (error: Error) => {
-        console.error("⚠️ WebSocket error:", error);
+            console.error("⚠️ WebSocket error:", error);
         });
     }
 
     // Gửi tin nhắn đến server
     public sendData(
+        command: "Follow markers" | "Calculate waypoints",
         mode: "marker" | "polygon",
         markers: Float64Array,
         polygonPoints: Float64Array
@@ -66,8 +57,8 @@ export class WebSocketClientWrapper {
 
         const dataToSend =
         mode === "marker"
-            ? { mode, markers: Array.from(markers) }
-            : { mode, polygonPoints: Array.from(polygonPoints) };
+            ? { command, mode, markers: Array.from(markers) }
+            : { command, mode, polygonPoints: Array.from(polygonPoints) };
 
         const message = JSON.stringify(dataToSend);
 

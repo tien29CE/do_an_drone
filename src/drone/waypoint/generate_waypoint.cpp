@@ -87,12 +87,12 @@ std::vector<Point> generate_coverage_path(const std::vector<std::pair<double, do
 
     double length = maxy - miny;
     // Compute the sweep spacing: strip_width = (scan_area_hectares * 10,000) / length.
-    double strip_width = (scan_area_hectares * 10000.0) / length;
+    double strip_width = 32;
 
     // Step 4: Generate vertical lines and compute intersections with the rotated polygon.
     std::vector<Point> pathPoints;
     bool toggle = false;
-    for (double x = minx; x <= maxx; x += strip_width) {
+    for (double x = minx - (strip_width / 2); x <= maxx + (strip_width / 2); x += strip_width) {
         LineString line;
         line.push_back(Point(x, miny));
         line.push_back(Point(x, maxy));
@@ -140,7 +140,7 @@ std::vector<Point> generate_coverage_path(const std::vector<std::pair<double, do
         in.xy.y = boost::geometry::get<1>(pt);
         PJ_COORD out = proj_trans(to_latlon, PJ_FWD, in);
         // Reverse the order to (lat, lon)
-        finalPath.push_back(Point(out.xy.y, out.xy.x));
+        finalPath.push_back(Point(out.xy.x, out.xy.y));
     }
 
     // Free PROJ resources.

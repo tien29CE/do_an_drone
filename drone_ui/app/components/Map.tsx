@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useEffect, useState } from "react";
+import React, { useState } from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -14,7 +14,7 @@ import markerShadowPng from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
 import { useWebSocketImage } from "../../hooks/hookWebsocket"; // <-- dùng hook
-
+import { useMemo } from "react";
 
 const createDroneIcon = (rotation: number) => {
   return new L.DivIcon({
@@ -31,6 +31,27 @@ const createDroneIcon = (rotation: number) => {
   });
 };
 
+const createWaypointIcon = (index: number) => {
+  return new L.DivIcon({
+    className: "waypoint-icon",
+    html: `<div style="
+      background: #6a0dad;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+      box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    ">${index + 1}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+};
 
 // Camera FOV & Resolution
 const FOV_X = 66 * (Math.PI / 180); // Chuyển sang radian
@@ -91,13 +112,13 @@ const url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const Map: React.FC = () => {
+  const [command, setCommand] = useState<"Follow markers" | "Calculate waypoints">("Follow markers");
   const [mode, setMode] = useState<"marker" | "polygon">("marker");
   const [markers, setMarkers] = useState<{ lat: number; lng: number }[]>([]);
   const [polygonPoints, setPolygonPoints] = useState<[number, number][]>([]);
   
-  const { recieveData } = useWebSocketImage("ws://localhost:4000");
+  const { receiveData, imageSrc, wayPoints } = useWebSocketImage("ws://localhost:4000");
 
-  console.log("recieveData", recieveData?.lat, recieveData?.lon);
   // Click event handler to add markers or shape points
   const MapClickHandler = () => {
     useMapEvents({
@@ -134,6 +155,7 @@ const Map: React.FC = () => {
 
   const handleSend = async () => {
     const data = {
+      command,
       mode,
       markers,
       polygonPoints
@@ -144,6 +166,30 @@ const Map: React.FC = () => {
     console.log("📤 Gửi dữ liệu thành công");
   };
 
+  const waypointMarkers = useMemo(() => {
+    if (!wayPoints) return null;
+  
+    return wayPoints.map(([lat, lon]: [number, number], index: number) => (
+      <Marker
+        key={`wp-${index}`}
+        position={[lat, lon]}
+        icon={createWaypointIcon(index)}
+      />
+    ));
+  }, [wayPoints]);
+  
+  const waypointPolygon = useMemo(() => {
+    if (!wayPoints) return null;
+  
+    return (
+      <Polygon
+        positions={wayPoints}
+        color="yellow"
+        weight={3}
+        dashArray="5"
+      />
+    );
+  }, [wayPoints]);
 
   return (
     <div className="relative">
@@ -153,7 +199,10 @@ const Map: React.FC = () => {
           className={`px-4 py-2 rounded ${
             mode === "marker" ? "bg-blue-500 text-white" : "bg-gray-300"
           }`}
-          onClick={() => setMode("marker")}
+          onClick={() => {
+            setMode("marker");
+            setCommand("Follow markers");
+          }}
         >
           Add Markers
         </button>
@@ -161,7 +210,10 @@ const Map: React.FC = () => {
           className={`px-4 py-2 rounded ${
             mode === "polygon" ? "bg-blue-500 text-white" : "bg-gray-300"
           }`}
-          onClick={() => setMode("polygon")}
+          onClick={() => {
+            setMode("polygon");
+            setCommand("Calculate waypoints");
+          }}
         >
           Draw Shape
         </button>
@@ -222,27 +274,29 @@ const Map: React.FC = () => {
           <Polygon positions={polygonPoints} color="purple" />
         )}
 
-        {recieveData && recieveData.lat && recieveData.lon && (
+        {receiveData && receiveData?.lat && receiveData?.lon && (
           <>
             {/* Drone Marker */}
             <Marker
-              position={[recieveData.lat, recieveData.lon]}
-              icon={createDroneIcon(recieveData.heading)}
+              position={[receiveData.lat, receiveData.lon]}
+              icon={createDroneIcon(receiveData.heading)}
             />
 
             {/* Camera View Box (FOV) */}
             <Polygon
-            positions={calculateViewArea(
-              recieveData.lat,
-              recieveData.lon,
-              recieveData.altitude || 50,
-              recieveData.heading || 0
-            ) as [number, number][]}
-            pathOptions={{ color: "blue", weight: 2 }}
-          />
+              positions={calculateViewArea(
+                receiveData.lat,
+                receiveData.lon,
+                receiveData.altitude || 50,
+                receiveData.heading || 0
+              ) as [number, number][]}
+              pathOptions={{ color: "blue", weight: 2 }}
+            />
           </>
         )}
 
+        {waypointPolygon}
+        {waypointMarkers}
       </MapContainer>
     </div>
   );

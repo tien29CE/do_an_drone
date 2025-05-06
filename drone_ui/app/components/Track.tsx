@@ -7,7 +7,7 @@ import { BatteryIndicator } from "@/app/components/BatteryIndicator"; // <-- dù
 import { useMemo } from "react";
 
 const Track: React.FC = () => {
-  const { receiveData, imageSrc } = useWebSocketImage("ws://localhost:4000");
+  const { receiveData, imageSrc } = useWebSocketImage("wss://drone-socket.onrender.com:443");
 
   const batteryDisplay = useMemo(() => {
     if (!receiveData || !receiveData.battery ) return null;

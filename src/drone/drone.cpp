@@ -14,5 +14,5 @@ void Drone::run()
     this->m_workerPool = new WorkerThreadPool();
     this->m_socket = new WebSocketClient(this->m_workerPool);
     this->m_workerPool->start();
-    this->m_socket->connect("localhost", 4000);
+    this->m_socket->connect("drone-socket.onrender.com", 443);
 }

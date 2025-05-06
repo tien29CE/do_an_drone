@@ -20,7 +20,8 @@ WebSocketClient::WebSocketClient(QObject *parent)
 
 void WebSocketClient::connect(const QString &host, quint16 port)
 {
-    this->m_url = QString("ws://%1:%2").arg(host, QString::number(port));
+    this->m_url = QString("wss://%1:%2").arg(host, QString::number(port));
+    qDebug() << this->m_url;
     this->m_socket->open(this->m_url);
 }
 
@@ -48,8 +49,8 @@ void WebSocketClient::onStateChange()
 void WebSocketClient::sendMessage(QString message)
 {
     if (this->m_socket->state() == QAbstractSocket::ConnectedState) {
-        this->m_socket->sendTextMessage(message);
     } else {
+        this->m_socket->sendTextMessage(message);
         qDebug() << "Không thể gửi tin nhắn, socket không kết nối!";
     }
 }

@@ -53,33 +53,42 @@ const createWaypointIcon = (index: number) => {
   });
 };
 
-// Camera FOV & Resolution
-const FOV_X = 66 * (Math.PI / 180); // Chuyển sang radian
-const FOV_Y = 41 * (Math.PI / 180); // Chuyển sang radian
-
 // Hàm tính toán chiều rộng và chiều cao vùng nhìn thấy trên mặt đất
-const calculateViewArea = (lat:number, lng:number, altitude:number, heading:number) => {
-  const W = 2 * altitude * Math.tan(FOV_X / 2);
-  const H = 2 * altitude * Math.tan(FOV_Y / 2);
+const calculateViewArea = (lat: number, lng: number, altitude: number, heading: number) => {
+  // Camera FOV & Resolution
+  const FOV_X = 66 / 180 * Math.PI; // Chuyển sang radian
+  const FOV_Y = 41 / 180 * Math.PI; // Chuyển sang radian
 
-  // Convert width & height to degrees
-  const halfW_deg = (W / 2) / (111320 * Math.cos(lat * Math.PI / 180));
-  const halfH_deg = (H / 2) / 110574;
+  // Ground footprint in meters
+  const W = 1.5 * altitude * Math.tan(FOV_X / 2);
+  const H = 1.5 * altitude * Math.tan(FOV_Y / 2);
 
-  // Convert heading to radians
-  const theta = heading * (Math.PI / 180);
-  const cosT = Math.cos(theta);
-  const sinT = Math.sin(theta);
+  // Tính góc quay (heading) về radian
+  const theta = -heading * Math.PI / 180;
 
-  // Calculate the four corners
+  // Tạo các đỉnh hình chữ nhật (trung tâm tại 0,0 trước khi quay)
   const corners = [
-    [lat + halfH_deg * cosT - halfW_deg * sinT, lng + halfH_deg * sinT + halfW_deg * cosT], // Top-right
-    [lat + halfH_deg * cosT + halfW_deg * sinT, lng + halfH_deg * sinT - halfW_deg * cosT], // Top-left
-    [lat - halfH_deg * cosT + halfW_deg * sinT, lng - halfH_deg * sinT - halfW_deg * cosT], // Bottom-left
-    [lat - halfH_deg * cosT - halfW_deg * sinT, lng - halfH_deg * sinT + halfW_deg * cosT], // Bottom-right
+    [-W / 2, H / 2],   // top-left
+    [W / 2, H / 2],    // top-right
+    [W / 2, -H / 2],   // bottom-right
+    [-W / 2, -H / 2],  // bottom-left
   ];
 
-  return corners;
+  // Hàm chuyển từ mét sang độ (theo latitude & longitude)
+  const meterToLat = (m: number) => m / 110574;
+  const meterToLng = (m: number) => m / (111320 * Math.cos(lat * Math.PI / 180));
+
+  // Quay và dịch các điểm theo heading
+  const rotated = corners.map(([x, y]) => {
+    const xr = x * Math.cos(theta) - y * Math.sin(theta);
+    const yr = x * Math.sin(theta) + y * Math.cos(theta);
+    return [
+      lat + meterToLat(yr),
+      lng + meterToLng(xr)
+    ];
+  });
+
+  return rotated;
 };
 
 
@@ -117,7 +126,7 @@ const Map: React.FC = () => {
   const [markers, setMarkers] = useState<{ lat: number; lng: number }[]>([]);
   const [polygonPoints, setPolygonPoints] = useState<[number, number][]>([]);
   
-  const { receiveData, imageSrc, wayPoints } = useWebSocketImage("ws://localhost:4000");
+  const { receiveData, imageSrc, wayPoints } = useWebSocketImage("wss://drone-socket.onrender.com:443");
 
   // Click event handler to add markers or shape points
   const MapClickHandler = () => {
@@ -161,7 +170,7 @@ const Map: React.FC = () => {
       polygonPoints
     };
   
-    axios.post("http://localhost:3000/api/send", data);
+    axios.post("/api/send", data);
 
     console.log("📤 Gửi dữ liệu thành công");
   };
@@ -287,7 +296,7 @@ const Map: React.FC = () => {
               positions={calculateViewArea(
                 receiveData.lat,
                 receiveData.lon,
-                receiveData.altitude || 50,
+                receiveData.altitude || 0,
                 receiveData.heading || 0
               ) as [number, number][]}
               pathOptions={{ color: "blue", weight: 2 }}

@@ -66,4 +66,4 @@ export class WebSocketClientWrapper {
     };
 }
 
-export const webSocketClient = new WebSocketClientWrapper('ws://localhost:4000')
+export const webSocketClient = new WebSocketClientWrapper('wss://drone-socket.onrender.com:443')

@@ -49,8 +49,8 @@ void WebSocketClient::onStateChange()
 void WebSocketClient::sendMessage(QString message)
 {
     if (this->m_socket->state() == QAbstractSocket::ConnectedState) {
-    } else {
         this->m_socket->sendTextMessage(message);
+    } else {
         qDebug() << "Không thể gửi tin nhắn, socket không kết nối!";
     }
 }

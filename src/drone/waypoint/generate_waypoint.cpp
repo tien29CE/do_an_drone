@@ -88,7 +88,7 @@ std::vector<Point> generate_coverage_path(const std::vector<std::pair<double, do
     double length = maxy - miny;
     // Compute the sweep spacing: strip_width = (scan_area_hectares * 10,000) / length.
     // height * tangent(33)
-    double strip_width = 25 * tan(deg2rad(33)) * 2; // 25m is the height of the drone.
+    double strip_width = 8 * tan(deg2rad(33)) * 2; // 8m is the height of the drone.
 
     // Step 4: Generate vertical lines and compute intersections with the rotated polygon.
     std::vector<Point> pathPoints;

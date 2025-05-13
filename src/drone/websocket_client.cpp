@@ -28,7 +28,11 @@ void WebSocketClient::connect(const QString &host, quint16 port)
 void WebSocketClient::onConnected()
 {
     qDebug() << "✅ Đã kết nối đến Next.js Socket!";
-    this->m_socket->sendBinaryMessage("Xin chào từ Qt Backend!");
+    QJsonObject json_data = {
+        {"command", "registry"},
+        {"name", "backend"}
+    };
+    this->m_socket->sendTextMessage(std::move(QString(QJsonDocument(json_data).toJson())));
 }
 
 void WebSocketClient::onDisconnected()
@@ -50,9 +54,10 @@ void WebSocketClient::sendMessage(QString message)
 {
     if (this->m_socket->state() == QAbstractSocket::ConnectedState) {
         this->m_socket->sendTextMessage(message);
-    } else {
-        qDebug() << "Không thể gửi tin nhắn, socket không kết nối!";
+        return;
     }
+
+    qDebug() << "Không thể gửi tin nhắn, socket không kết nối!";
 }
 
 void WebSocketClient::addTask(QString data)

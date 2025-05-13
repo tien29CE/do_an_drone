@@ -2,23 +2,6 @@ import  { WebSocket } from "ws";
 
 export let imageSrc: string = ""; // Khởi tạo biến imageSrc ở đây
 
-interface ReceiveData {
-    id: string;
-    command: string;
-    mode: string;
-    roll_deg: number;
-    pitch_deg: number;
-    yaw_deg: number;
-    heading: number;
-    altitude: number;
-    lat: number;
-    lon: number;
-    battery: number;
-    image: string; // base64 string
-    wayPoints: any;
-  }
-  
-  
 export class WebSocketClientWrapper {
     private ws: WebSocket;
     private url: string;
@@ -54,15 +37,22 @@ export class WebSocketClientWrapper {
         polygonPoints: Float64Array
     ) {
         if (markers.length === 0 && polygonPoints.length === 0) return;
+        var to = "drone";
+        if (command === "Calculate waypoints") {
+            to = "backend";
+        }
 
         const dataToSend =
         mode === "marker"
-            ? { command, mode, markers: Array.from(markers) }
-            : { command, mode, polygonPoints: Array.from(polygonPoints) };
+            ? { command, mode, markers: Array.from(markers), to }
+            : { command, mode, polygonPoints: Array.from(polygonPoints), to };
 
         const message = JSON.stringify(dataToSend);
 
-        this.ws.send(message);
+        if (this.ws.readyState === WebSocket.OPEN) {
+            console.log("📤 Gửi dữ liệu thành công");
+            this.ws.send(message);
+        }
     };
 }
 

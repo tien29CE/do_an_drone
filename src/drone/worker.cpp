@@ -44,7 +44,11 @@ void Worker::doTask(QString data)
         }
         send_back_data.insert("wayPoints", pathPoints);
         send_back_data.insert("command", "Follow waypoints");
+        send_back_data.insert("to", "frontend");
         auto transmit_data = QString(QJsonDocument(send_back_data).toJson());
+        qobject_cast<WorkerThreadPool*>(this->m_workerPool)->emitTaskDone(std::move(transmit_data));
+        send_back_data.insert("to", "drone");
+        transmit_data = QString(QJsonDocument(send_back_data).toJson());
         qobject_cast<WorkerThreadPool*>(this->m_workerPool)->emitTaskDone(std::move(transmit_data));
     }
 

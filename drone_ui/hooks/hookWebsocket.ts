@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 export interface ReceiveData {
-  id: string;
+  name: string;
   command: string;
   mode: string;
   roll_deg: number;
@@ -15,6 +15,7 @@ export interface ReceiveData {
   battery: number;
   image: string;
   wayPoints: any;
+  to: string;
 }
 
 export const useWebSocketImage = (url: string) => {
@@ -27,6 +28,11 @@ export const useWebSocketImage = (url: string) => {
 
     ws.onopen = () => {
       console.log("✅ Connected to WebSocket");
+      const registerData = {
+        command: "registry",
+        name: "frontend"
+      };
+      ws.send(JSON.stringify(registerData));
     };
 
     ws.onmessage = (event) => {
@@ -35,7 +41,7 @@ export const useWebSocketImage = (url: string) => {
         if (!data.image && !data.wayPoints) {
           console.log("📥 Received at data:", data);
           setReceiveData(data);
-          return
+          return;
         }
 
         if (data.image && !data.wayPoints  && data.image !== "") {
